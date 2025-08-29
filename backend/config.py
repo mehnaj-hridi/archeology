@@ -1,7 +1,11 @@
 import os
 
-class Config:
-    # Database URI (using MariaDB/MySQL with PyMySQL driver)
-    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://arch_user:Arch1234!@localhost/archeo_db"
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "supersecretkey"
+# MariaDB/MySQL connection details
+DB_USER = "arch_user"
+DB_PASSWORD = "Arch1234!"
+DB_HOST = "localhost"
+DB_NAME = "archeo_db"
+
+# Flask SQLAlchemy configuration
+SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+SQLALCHEMY_TRACK_MODIFICATIONS = False
