@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import DonationPage from "./Donation";
 
-function App() {
+function Home() {
   const [message, setMessage] = useState("");
 
   const testDbConnection = async () => {
@@ -18,7 +20,21 @@ function App() {
       <h1>Archeology Frontend</h1>
       <button onClick={testDbConnection}>Check DB Connection</button>
       <p>{message}</p>
+      <Link to="/donate" style={{ display: "block", marginTop: "1rem", color: "blue" }}>
+        Go to Donation Page
+      </Link>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/donate" element={<DonationPage />} />
+      </Routes>
+    </Router>
   );
 }
 
