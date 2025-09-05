@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './CSS/Donation.css';
 import heroImage from './assets/hero-archaeology.jpg';
-
+import Navigation from './navbar';
 // Button Component
 const Button = ({ variant = 'default', size = 'default', className = '', children, ...props }) => {
   const baseClasses = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
@@ -32,24 +32,21 @@ const Button = ({ variant = 'default', size = 'default', className = '', childre
   );
 };
 
-// ---------------- Badge Component ----------------
+// Badge Component
 const Badge = ({ variant = 'default', className = '', children, ...props }) => {
   const baseClasses = "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium";
-  
   const variants = {
     default: "bg-gray-200 text-gray-800",
     secondary: "bg-secondary text-secondary-foreground",
     outline: "border border-gray-300 text-gray-800",
-    blue: "bg-blue-500 text-white", // new blue variant for modal
+    blue: "bg-blue-500 text-white"
   };
-  
   return (
     <span className={`${baseClasses} ${variants[variant]} ${className}`} {...props}>
       {children}
     </span>
   );
 };
-
 
 // Card Components
 const Card = ({ className = '', children, ...props }) => (
@@ -76,31 +73,6 @@ const CardContent = ({ className = '', children, ...props }) => (
   </div>
 );
 
-// Navigation Component
-const Navigation = () => {
-  return (
-    <nav className="fixed top-0 left-0 right-0 bg-background/80 backdrop-blur-md border-b border-border z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-8">
-            <div className="text-2xl font-bold text-primary">🏺 ProtnoPoth</div>
-            <div className="hidden md:flex space-x-6">
-              <a href="#" className="text-foreground hover:text-primary transition-colors">Projects</a>
-              <a href="#" className="text-foreground hover:text-primary transition-colors">About</a>
-              <a href="#" className="text-foreground hover:text-primary transition-colors">Impact</a>
-              <a href="#" className="text-foreground hover:text-primary transition-colors">Research</a>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" className="hidden md:inline-flex">Sign In</Button>
-            <Button variant="archaeological">Donate Now</Button>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-};
 
 // DonationHero Component
 const DonationHero = () => {
@@ -148,13 +120,9 @@ const DonationHero = () => {
   );
 };
 
-// DonationForm Component
+// DonationForm Component (modified)
 const DonationForm = () => {
   const predefinedAmounts = [25, 50, 100, 250, 500];
-
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [selectedAmount, setSelectedAmount] = useState(50);
   const [customAmount, setCustomAmount] = useState('');
@@ -164,6 +132,7 @@ const DonationForm = () => {
   const [modalMessage, setModalMessage] = useState('');
 
   const currentAmount = customAmount ? parseInt(customAmount) : selectedAmount;
+  const user = JSON.parse(localStorage.getItem("user")); // logged-in user
 
   const donationTypes = [
     { value: 'research', label: 'Archaeological Research', desc: 'Fund excavations and scientific analysis' },
@@ -172,31 +141,25 @@ const DonationForm = () => {
     { value: 'equipment', label: 'Equipment & Technology', desc: 'Advanced tools for better discoveries' }
   ];
 
-  // Submit handler
   const handleDonate = async () => {
     try {
-      const res = await fetch('http://localhost:5000/donate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("http://localhost:5000/donate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          first_name: firstName,
-          last_name: lastName,
-          email,
+          nid: user?.nid,
           amount: currentAmount,
           donation_type: donationType,
-          message
-        })
+          message,
+        }),
+        credentials: "include",
       });
-
       const data = await res.json();
 
-      if (data.status === 'success') {
-        setModalMessage('Donation recorded successfully! 🎉');
-        setModalOpen(true);
-      } else {
-        setModalMessage(`Error: ${data.message}`);
-        setModalOpen(true);
-      }
+      setModalMessage(data.status === 'success' 
+        ? 'Donation recorded successfully! 🎉' 
+        : `Error: ${data.message}`);
+      setModalOpen(true);
     } catch (err) {
       setModalMessage(`Failed to record donation: ${err}`);
       setModalOpen(true);
@@ -206,9 +169,6 @@ const DonationForm = () => {
   const handleModalOk = () => {
     setModalOpen(false);
     if (modalMessage.includes('successfully')) {
-      setFirstName('');
-      setLastName('');
-      setEmail('');
       setMessage('');
       setSelectedAmount(50);
       setCustomAmount('');
@@ -275,7 +235,7 @@ const DonationForm = () => {
                   ))}
                   <Button
                     variant={customAmount ? 'archaeological' : 'outline'}
-                    onClick={() => setSelectedAmount(0)}
+                    onClick={() => { setSelectedAmount(0); setCustomAmount(''); }}
                     className="h-12"
                   >
                     Custom
@@ -292,30 +252,7 @@ const DonationForm = () => {
                 )}
               </div>
 
-              {/* Contact Information */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="First Name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="p-3 rounded-lg border border-gray-300 bg-white focus:border-primary focus:outline-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Last Name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="p-3 rounded-lg border border-gray-300 bg-white focus:border-primary focus:outline-none"
-                />
-              </div>
-              <input
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 rounded-lg border border-gray-300 bg-white focus:border-primary focus:outline-none"
-              />
+              {/* Optional Message */}
               <textarea
                 placeholder="Optional message"
                 rows="3"
@@ -334,86 +271,72 @@ const DonationForm = () => {
               </Button>
             </CardContent>
           </Card>
-          {/* Impact Information */}
-<div className="space-y-6">
-  {/* Donation Impact Cards */}
-  <Card className="p-6 shadow-card-hover">
-    <CardHeader>
-      <CardTitle className="text-xl">Your Impact</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="space-y-3">
-        <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-          <span className="font-medium">$25</span>
-          <span className="text-sm text-muted-foreground">funds 1 week of site documentation</span>
-        </div>
-        <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-          <span className="font-medium">$50</span>
-          <span className="text-sm text-muted-foreground">covers basic excavation tools</span>
-        </div>
-        <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-          <span className="font-medium">$100</span>
-          <span className="text-sm text-muted-foreground">supports artifact analysis</span>
-        </div>
-        <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-          <span className="font-medium">$250</span>
-          <span className="text-sm text-muted-foreground">funds 1 month of preservation work</span>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
 
-  {/* Recent Success Story Card */}
-  <Card className="p-6 shadow-card-hover border-l-4 border-l-primary">
-    <CardContent className="pt-6">
-      <div className="flex items-start space-x-3">
-        <div className="text-2xl">🏺</div>
-        <div>
-          <h4 className="font-semibold text-foreground mb-2">Recent Success Story</h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Thanks to donations like yours, we recently uncovered a 3,000-year-old ceremonial site in Peru, 
-            providing new insights into ancient Andean civilizations. Your support makes discoveries like this possible.
-          </p>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-</div>
+          {/* Impact Cards */}
+          <div className="space-y-6">
+            <Card className="p-6 shadow-card-hover">
+              <CardHeader>
+                <CardTitle className="text-xl">Your Impact</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="font-medium">$25</span>
+                  <span className="text-sm text-muted-foreground">funds 1 week of site documentation</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="font-medium">$50</span>
+                  <span className="text-sm text-muted-foreground">covers basic excavation tools</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="font-medium">$100</span>
+                  <span className="text-sm text-muted-foreground">supports artifact analysis</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="font-medium">$250</span>
+                  <span className="text-sm text-muted-foreground">funds 1 month of preservation work</span>
+                </div>
+              </CardContent>
+            </Card>
 
+            <Card className="p-6 shadow-card-hover border-l-4 border-l-primary">
+              <CardContent className="pt-6">
+                <div className="flex items-start space-x-3">
+                  <div className="text-2xl">🏺</div>
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-2">Recent Success Story</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Thanks to donations like yours, we recently uncovered a 3,000-year-old ceremonial site in Peru, 
+                      providing new insights into ancient Andean civilizations. Your support makes discoveries like this possible.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
-     {/* Blue Popup Modal */}
-{/* Blue Popup Modal */}
-{modalOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center">
-    {/* Overlay to override main background */}
-    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-
-    {/* Modal content - green box */}
-    <div className="relative bg-modal-success rounded-xl shadow-2xl max-w-sm w-full p-8 z-10 border border-green-600">
-      <div className="text-white text-3xl mb-4">✅</div>
-      <p className="text-white font-semibold text-lg mb-6">{modalMessage}</p>
-      <Button
-        variant="heroSecondary"
-        className="bg-white text-green-700 hover:bg-green-100 px-6 py-3 font-semibold"
-        onClick={handleModalOk}
-      >
-        OK
-      </Button>
-    </div>
-  </div>
-)}
-
-
-
-
-
+      {/* Blue Popup Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+          <div className="relative bg-modal-success rounded-xl shadow-2xl max-w-sm w-full p-8 z-10 border border-green-600">
+            <div className="text-white text-3xl mb-4">✅</div>
+            <p className="text-white font-semibold text-lg mb-6">{modalMessage}</p>
+            <Button
+              variant="heroSecondary"
+              className="bg-white text-green-700 hover:bg-green-100 px-6 py-3 font-semibold"
+              onClick={handleModalOk}
+            >
+              OK
+            </Button>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
 
-// Impact Section Component
 const ImpactSection = () => {
   const impactStats = [
     { label: "Sites Preserved", value: "127", description: "Archaeological sites protected worldwide" },
@@ -463,9 +386,7 @@ const ImpactSection = () => {
             {donationUsage.map((usage, index) => (
               <Card key={index} className="p-6 shadow-card-hover hover:shadow-archaeological transition-all duration-300 group">
                 <CardHeader className="text-center pb-4">
-                  <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">
-                    {usage.icon}
-                  </div>
+                  <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">{usage.icon}</div>
                   <Badge variant="secondary" className="mb-3">{usage.percentage}</Badge>
                   <CardTitle className="text-lg">{usage.category}</CardTitle>
                 </CardHeader>
@@ -494,8 +415,6 @@ const ImpactSection = () => {
     </section>
   );
 };
-
-// Footer Component
 const Footer = () => {
   return (
     <footer className="bg-primary text-primary-foreground py-12 px-4">
@@ -516,10 +435,10 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Quick Links</h3>
             <div className="space-y-2 text-sm">
-              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors"> About Us </a>
-              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors"> Our Projects </a>
-              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors"> Research Impact </a>
-              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors"> Contact </a>
+              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">About Us</a>
+              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">Our Projects</a>
+              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">Research Impact</a>
+              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">Contact</a>
             </div>
           </div>
 
@@ -527,10 +446,10 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Support</h3>
             <div className="space-y-2 text-sm">
-              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors"> Donate </a>
-              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors"> Volunteer </a>
-              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors"> Partnership </a>
-              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors"> FAQ </a>
+              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">Donate</a>
+              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">Volunteer</a>
+              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">Partnership</a>
+              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">FAQ</a>
             </div>
           </div>
         </div>

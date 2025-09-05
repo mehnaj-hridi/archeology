@@ -24,7 +24,7 @@
 :root {
   /* Light Theme Colors (HSL) */
   --background: hsl(44, 20%, 97%);
-  --foreground: hsl(0, 0%, 100%);
+  --foreground: hsl(180, 25%, 15%); /* 0, 0%, 100% */
   --card: hsl(44, 30%, 98%);
   --card-foreground: hsl(180, 25%, 15%);
   --popover: hsl(44, 30%, 98%);
